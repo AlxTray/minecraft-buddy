@@ -2,9 +2,11 @@ package com.alxtray.minecraftbuddy;
 
 import net.fabricmc.api.ClientModInitializer;
 
+import static com.alxtray.minecraftbuddy.FrameGrabber.*;
+
 public class MinecraftbuddyClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
-		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
+		register(10);
 	}
 }
