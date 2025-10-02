@@ -50,7 +50,7 @@ public class FrameGrabber implements ClientTickEvents.EndTick {
                 int b = buffer.get(index + 2) & 0xFF;
                 int a = buffer.get(index + 3) & 0xFF;
 
-                image.setColor(x, y, (a << 24) | (r << 16) | (g << 8) | b);
+                image.setColor(x, y, (a << 24) | (b << 16) | (g << 8) | r);
             }
         }
 
