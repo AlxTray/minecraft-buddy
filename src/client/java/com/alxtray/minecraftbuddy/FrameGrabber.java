@@ -1,6 +1,5 @@
 package com.alxtray.minecraftbuddy;
 
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.texture.NativeImage;
@@ -11,28 +10,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 
-public class FrameGrabber implements ClientTickEvents.EndTick {
-
-    private final long intervalMillis;
-    private long lastCaptureTime = 0;
-
-    public FrameGrabber(long intervalSeconds) {
-        this.intervalMillis = intervalSeconds * 1000L;
-    }
-
-    @Override
-    public void onEndTick(MinecraftClient client) {
-        if (client.world == null) return;
-
-        long now = System.currentTimeMillis();
-        if (now - lastCaptureTime < intervalMillis) return;
-
-        lastCaptureTime = now;
-        captureFramebuffer(client);
-    }
-
-    private void captureFramebuffer(MinecraftClient client) {
-        Framebuffer framebuffer = client.getFramebuffer();
+public class FrameGrabber {
+    public static void captureFramebuffer() {
+        Framebuffer framebuffer = MinecraftClient.getInstance().getFramebuffer();
 
         int width = framebuffer.textureWidth;
         int height = framebuffer.textureHeight;
@@ -54,7 +34,7 @@ public class FrameGrabber implements ClientTickEvents.EndTick {
             }
         }
 
-        String path = getClass().getResource("/frames").getPath();
+        String path = FrameGrabber.class.getResource("/frames").getPath();
         try {
             image.writeTo(Paths.get(path, "frame.png"));
         } catch (IOException e) {
@@ -62,11 +42,5 @@ public class FrameGrabber implements ClientTickEvents.EndTick {
         } finally {
             image.close();
         }
-
-        AIResponseHandler.getInstance().runRequest();
-    }
-
-    public static void register(long intervalSeconds) {
-        ClientTickEvents.END_CLIENT_TICK.register(new FrameGrabber(intervalSeconds));
     }
 }
