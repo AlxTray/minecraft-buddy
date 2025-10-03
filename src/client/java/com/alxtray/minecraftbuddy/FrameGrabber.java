@@ -63,7 +63,7 @@ public class FrameGrabber implements ClientTickEvents.EndTick {
             image.close();
         }
 
-        new AIResponseHandler();
+        AIResponseHandler.getInstance().runRequest();
     }
 
     public static void register(long intervalSeconds) {
