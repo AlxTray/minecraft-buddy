@@ -21,8 +21,6 @@ public class EventOrchestrator implements ClientTickEvents.EndTick {
 
         FrameGrabber.captureFramebuffer();
         ConversationHandler.getInstance().runRequest();
-
-        System.out.println("\u001B[31m" + ConversationHandler.getInstance().getLatestResponse() + "\u001B[0m");
     }
 
     public static void register(long intervalSeconds) {
