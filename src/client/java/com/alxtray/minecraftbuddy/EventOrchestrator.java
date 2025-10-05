@@ -5,6 +5,7 @@ import net.minecraft.client.MinecraftClient;
 
 public class EventOrchestrator implements ClientTickEvents.EndTick {
     private final long periodicInterval;
+    private boolean onLoadingScreen = true;
     private long lastCaptureTime = 0;
 
     public EventOrchestrator(long periodicIntervalSeconds) {
@@ -18,9 +19,13 @@ public class EventOrchestrator implements ClientTickEvents.EndTick {
         long now = System.currentTimeMillis();
         if (now - lastCaptureTime < periodicInterval) return;
         lastCaptureTime = now;
+        if (onLoadingScreen) {
+            onLoadingScreen = false;
+            return;
+        }
 
         FrameGrabber.captureFramebuffer();
-        ConversationHandler.getInstance().runRequest();
+        ConversationHandler.getInstance().runRequestAsync();
     }
 
     public static void register(long intervalSeconds) {

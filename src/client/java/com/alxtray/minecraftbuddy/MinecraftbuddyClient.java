@@ -12,6 +12,6 @@ public class MinecraftbuddyClient implements ClientModInitializer {
         conversationHandler.init();
         conversationHandler.subscribe(new DebugPrintOutResponseTTS());
 
-		register(10);
+		register(30);
 	}
 }

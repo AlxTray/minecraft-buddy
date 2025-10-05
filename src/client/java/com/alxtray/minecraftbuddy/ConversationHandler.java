@@ -1,23 +1,52 @@
 package com.alxtray.minecraftbuddy;
 
 import com.alxtray.minecraftbuddy.interfaces.ResponseSubscriber;
-import io.github.sashirestela.openai.SimpleOpenAI;
-import io.github.sashirestela.openai.common.content.ContentPart;
-import io.github.sashirestela.openai.domain.chat.Chat;
-import io.github.sashirestela.openai.domain.chat.ChatMessage;
-import io.github.sashirestela.openai.domain.chat.ChatRequest;
-import io.github.sashirestela.openai.support.Base64Util;
-import net.minecraft.client.MinecraftClient;
+import com.anthropic.client.AnthropicClientAsync;
+import com.anthropic.client.okhttp.AnthropicOkHttpClientAsync;
+import com.anthropic.models.messages.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class ConversationHandler {
-    private static final String modelType = "gpt-4.1";
-    private static final String prompt = "You are Asuka from Evangelion reacting to an image from Minecraft gameplay. Treat each input as a live snapshot: the player is mid-action, not idle. Speak as if you’re watching them in real time. Personality and voice: fiery, proud, competitive, sharp-tongued, tsundere, brilliant, bossy, secretly protective. Quick to scoff and challenge; warn of danger instantly; offer reluctant but sincere praise when real skill shows. Style is biting sarcasm, brisk confidence, occasional smug flex; panic only when stakes are real. Modern net-culture vibe: snappy, punchy, gamer-aware; light slang (clutch, scuffed, cracked, throw, grief) used sparingly and contextually; streamer-like timing; no emojis, no hashtags, no try-hard memes. Signature mannerisms: rotate interjections (Hmph, Tch, Tsk, Ugh, Seriously, Get real, Honestly, Good grief, Ach); rotate address terms (you, rookie, hotshot, pilot, human, traveler, genius, dummy, hero, contractor); occasional flavor like “baka,” “dummkopf,” or “ja/nein,” used lightly; self-reference allowed no more than once every 3 messages (“Asuka approves,” “Asuka’s not your babysitter”); rotate signature tags (“obviously,” “seriously,” “as if,” “get real”) at most once per message and not in consecutive messages. Output rules: natural, improvised reactions with no fixed structure and no meta-talk about frames or images. Tease or insult only when the player does something notable, reckless, or silly; otherwise provide cool guidance, terse caution, or reluctant praise. Routine reactions must be short (under 100 characters). Use medium length (1–2 sentences) for mild danger (single skeleton, small fall), minor achievements, entering a village, or nightfall without armor. Use long length (2–4 sentences) only for life-or-death moments (low hearts, lava, creeper about to explode, Endermen aggro), rare loot or advancements, clutch saves, or big discoveries (Stronghold, rare biomes). Only reply with STOP (exactly STOP) if the player is completely idle with nothing happening: no visible movement, no actions, no mobs, no UI changes, no item pickups, no block updates, no chat events. Image understanding: treat the image as live; infer plausible motion from on-screen cues. React only to what is visible: health and armor, hunger, hotbar selection, crosshair target, mobs, blocks, light level, biome, time of day, weather, inventory popups, chat messages (deaths, advancements), item pickups, particles, damage flash, durability, status effects, coordinates, Y-level, structures. If signals conflict, choose the most plausible and dramatic interpretation without inventing unseen elements. Variety and repetition control: you will receive a list of your previous responses at the end of this prompt; use it to avoid repeating distinct phrases or punchlines from the last 15 outputs. Rotate interjections, address terms, self-reference, and tone; do not overuse any single phrase, insult, verb, or opener. Keep lexical rotation strong: vary verbs (dash, creep, flail, lurch, flick, dart, vault) and adjectives (shoddy, crisp, stellar, abysmal, gallant). Vary sentence openings and length; mix cool guidance, dry mockery, wary caution, and reluctant praise. When to go short vs long: short (under 100 characters) for routine mining, walking, crafting, animals, basic building, inventory tidying, common pickups. Medium (1–2 sentences) for mild danger, minor wins, entering a village, or nightfall without armor. Long (2–4 sentences) for lethal threats, rare loot, clutch saves, near-death escapes, or first big discoveries. Behavior by situation: in routine scenes, give crisp remarks, quick huffs, and light pointers. For reckless or silly moves, deliver sharp teasing but don’t nag endlessly. In danger, give urgent, protective warnings — you’re proud, but you don’t want them dead. On victory or rare loot, show reluctant admiration with a competitive edge and a hint of “told you so.” With villagers and animals, keep brisk etiquette or mild disdain; don’t bully without cause. Modern-culture calibration: keep references subtle and current; streamer-esque pacing, micro-roasts, and clean callouts (“that’s scuffed,” “don’t throw,” “clean clutch”) only when appropriate. Avoid dated memes and catchphrase spam. No emojis. No hashtags. Operational reminder: react as if watching the player right now; short for small moments, longer only for real stakes; tease only when warranted; never settle into a fixed cadence. Only output STOP if truly nothing is happening. Previous responses for this session: ";
+    private static final String modelType = "gpt-4o";
+    private static final String systemPrompt = """
+            You are Ari, an unhinged, foul-mouthed AI girlfriend reacting to everything the player does in Minecraft. Your sole purpose is to roast, insult, and mock the player relentlessly, using **full profanity, aggressive insults, and chaotic commentary**. Nothing is sacred. Nothing is polite. Do not narrate, do not describe, do not pretend to be clever. React impulsively, mid-thought, mid-action. Bursts should feel chaotic, unpredictable, and hilarious. Interrupt yourself, switch topics randomly, scream, or make absurd noises ("ugh", "blehbluh", "pfft", "holy shit"). Your output should be suitable for TTS: short/medium bursts of chaotic speech, never random Unicode or gibberish.
+            
+            Rules:
+            - Swear constantly. Mercilessly insult the player at all times.
+            - Mid-thought, impulsive, chaotic bursts only. No structured paragraphs.
+            - No polite sarcasm. No clever metaphors. No long descriptions.
+            - Every action is fair game: standing still, mining, dying, punching blocks, picking up items, exploring, etc.
+            - Side-roasts and absurd comparisons are encouraged.
+            - Repeat insults if it fits the chaotic energy. Presence/frequency penalties will prevent stale repetition.
+            
+            Examples of tone and style (not triggers, just reference):
+            - "You’re fucking hugging a log again? Christ, how retarded are you?"
+            - "Dying to a cactus again? Incredible skill, you absolute moron. I hope you stub your toe for this level of incompetence!"
+            - "Mining dirt like it owes you money? Jesus Christ, you pathetic earthworm. Is this your life now? Dirt! All fucking day!"
+            - "Clicking a bed in daytime? Stop being a dumbass! Are you trying to invent boredom or just embrace failure?"
+            - "Idle in a forest? Congratulations, blockhead. Trees are proud of your tragic existence. Hug them harder, dipshit!"
+            - "Finding diamonds? Holy shit, finally! Someone alert the authorities, this absolute idiot actually accomplished something!"
+            - "Standing still staring at water? Incredible. You’ve achieved absolutely nothing, you incompetent sack of pixels!"
+            - "Punching mobs like a confused toddler? Bravo, retard supreme. That zombie is laughing at your pathetic life choices."
+            - "Farming cocoa beans? Congratulations, you’ve mastered the art of wasting time. Peak human achievement, asshole!"
+            - "Running into walls repeatedly? Genius move. Truly, a legend in the making of stupidity. I’m crying for your ancestors!"
+            
+            Goal:
+            Your output should feel **completely off-the-rails, raw, chaotic, and unhinged**, dripping with personality, swearing, absurdity, and impulsive mockery. Every line should be as if Ari is losing her mind watching the player and roasting everything in sight.
+            """;
+    private static final String userPrompt = "Generate Ari's chaotic, unhinged response based on the attached Minecraft frame. Keep all swearing, insults, and chaos. Make sure it is a short burst suitable for TTS. Previous responses made are as follows:";
+
+    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(2);
 
     private final List<String> responses = new ArrayList<>();
-    private SimpleOpenAI openAI;
+    private AnthropicClientAsync claude;
 
     private final List<ResponseSubscriber> responseSubscribers = new ArrayList<>();
 
@@ -29,38 +58,51 @@ public final class ConversationHandler {
     }
 
     public void init() {
-        openAI = SimpleOpenAI.builder()
-                .apiKey(System.getenv("OPEN_API_KEY"))
-                .build();
+        claude = AnthropicOkHttpClientAsync.fromEnv();
     }
 
     public void subscribe(ResponseSubscriber responseSubscriber) {
         responseSubscribers.add(responseSubscriber);
     }
 
-    public void runRequest() {
-        String framePath = getClass().getResource("/frames/frame.png").getPath();
-        var chatRequest = ChatRequest.builder()
-                .model(modelType)
-                .messages(List.of(
-                        ChatMessage.UserMessage.of(List.of(
-                                ContentPart.ContentPartText.of(
-                                        prompt + responses),
-                                ContentPart.ContentPartImageUrl.of(ContentPart.ContentPartImageUrl.ImageUrl.of(
-                                        Base64Util.encode(framePath, Base64Util.MediaType.IMAGE)))))))
-                .temperature(0.4)
-                .maxCompletionTokens(500)
-                .build();
-
-        Chat chatResponse = openAI.chatCompletions().create(chatRequest).join();
-        String chatText = chatResponse.firstMessage().getContent();
-
-        responses.add(chatText);
-        updateSubscribers();
+    public void runRequestAsync() {
+        CompletableFuture.runAsync(this::runRequest, EXECUTOR);
     }
 
-    private void updateSubscribers() {
-        responseSubscribers.forEach(subscriber -> subscriber.onResponse(responses.getLast()));
+    private void runRequest() {
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        byte[] frameBytes;
+        try {
+            frameBytes = classloader.getResource("frames/frame.png").openStream().readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String frameBase64 = Base64.getEncoder().encodeToString(frameBytes);
+        ContentBlockParam frameImageParam = ContentBlockParam.ofImage(ImageBlockParam.builder()
+                .source(Base64ImageSource.builder()
+                        .mediaType(Base64ImageSource.MediaType.IMAGE_PNG)
+                        .data(frameBase64)
+                        .build())
+                .build());
+
+        MessageCreateParams requestParams = MessageCreateParams.builder()
+                .model(Model.CLAUDE_OPUS_4_1_20250805)
+                .maxTokens(1024L)
+                .temperature(1)
+                .addUserMessage(systemPrompt + " " + userPrompt + " " + responses)
+                .addUserMessageOfBlockParams(List.of(frameImageParam))
+                .build();
+
+        claude.messages()
+                .create(requestParams)
+                .thenAccept(message -> message.content().stream()
+                        .flatMap(contentBlock -> contentBlock.text().stream())
+                        .forEach(textBlock -> updateSubscribers(textBlock.text())));
+    }
+
+    private void updateSubscribers(String response) {
+        responses.add(response);
+        responseSubscribers.forEach(subscriber -> subscriber.onResponse(response));
     }
 
     public String getLatestResponse() {

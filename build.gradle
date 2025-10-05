@@ -35,8 +35,7 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    implementation 'io.github.sashirestela:simple-openai:3.22.2'
-    implementation 'com.squareup.okhttp3:okhttp:5.1.0'
+    implementation("com.anthropic:anthropic-java:2.8.1")
 }
 
 processResources {
