@@ -42,5 +42,7 @@ public class FrameGrabber {
         } finally {
             image.close();
         }
+
+        System.out.println("FINISHED FRAMEBUFFER");
     }
 }
