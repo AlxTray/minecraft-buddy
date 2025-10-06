@@ -86,7 +86,7 @@ public final class ConversationHandler {
                 .build());
 
         MessageCreateParams requestParams = MessageCreateParams.builder()
-                .model(Model.CLAUDE_OPUS_4_1_20250805)
+                .model(Model.CLAUDE_SONNET_4_5_20250929)
                 .maxTokens(1024L)
                 .temperature(1)
                 .addUserMessage(systemPrompt + " " + userPrompt + " " + responses)
