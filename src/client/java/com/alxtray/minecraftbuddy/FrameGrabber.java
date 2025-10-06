@@ -9,16 +9,22 @@ import org.lwjgl.opengl.GL11;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
 
 public class FrameGrabber {
+    public static void captureFrameBufferAsync() {
+        CompletableFuture.runAsync(FrameGrabber::captureFramebuffer, ExecutorsRegistry.FRAMEBUFFER_EXECUTOR);
+    }
+
     public static void captureFramebuffer() {
-        Framebuffer framebuffer = MinecraftClient.getInstance().getFramebuffer();
+        MinecraftClient mc = MinecraftClient.getInstance();
+        Framebuffer framebuffer = mc.getFramebuffer();
 
         int width = framebuffer.textureWidth;
         int height = framebuffer.textureHeight;
 
         ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * 4);
-        GL11.glReadPixels(0, 0, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
+        mc.execute(() -> GL11.glReadPixels(0, 0, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer));
 
         NativeImage image = new NativeImage(width, height, false);
 

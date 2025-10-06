@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public final class ConversationHandler {
     private static final String modelType = "gpt-4o";
@@ -43,8 +41,6 @@ public final class ConversationHandler {
             """;
     private static final String userPrompt = "Generate Ari's chaotic, unhinged response based on the attached Minecraft frame. Keep all swearing, insults, and chaos. Make sure it is a short burst suitable for TTS. Previous responses made are as follows:";
 
-    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(2);
-
     private final List<String> responses = new ArrayList<>();
     private AnthropicClientAsync claude;
 
@@ -66,7 +62,7 @@ public final class ConversationHandler {
     }
 
     public void runRequestAsync() {
-        CompletableFuture.runAsync(this::runRequest, EXECUTOR);
+        CompletableFuture.runAsync(this::runRequest, ExecutorsRegistry.AI_EXECUTOR);
     }
 
     private void runRequest() {
@@ -102,7 +98,7 @@ public final class ConversationHandler {
 
     private void updateSubscribers(String response) {
         responses.add(response);
-        responseSubscribers.forEach(subscriber -> subscriber.onResponse(response));
+        responseSubscribers.forEach(subscriber -> subscriber.onResponseAsync(response));
     }
 
     public String getLatestResponse() {

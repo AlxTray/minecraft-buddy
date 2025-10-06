@@ -24,7 +24,7 @@ public class EventOrchestrator implements ClientTickEvents.EndTick {
             return;
         }
 
-        FrameGrabber.captureFramebuffer();
+        FrameGrabber.captureFrameBufferAsync();
         ConversationHandler.getInstance().runRequestAsync();
     }
 
