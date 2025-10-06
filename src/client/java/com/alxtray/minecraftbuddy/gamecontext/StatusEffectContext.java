@@ -13,7 +13,7 @@ public class StatusEffectContext {
         return name;
     }
 
-    public int getCount() {
+    public float getCount() {
         return timeRemaining;
     }
 }
