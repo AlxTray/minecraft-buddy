@@ -1,10 +1,10 @@
 package com.alxtray.minecraftbuddy.gamecontext;
 
-public class InventoryItemContext {
+public class ItemContext {
     public String name;
     public int count;
 
-    public InventoryItemContext(String name, int count) {
+    public ItemContext(String name, int count) {
         this.name = name;
         this.count = count;
     }
