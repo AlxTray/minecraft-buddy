@@ -5,7 +5,7 @@ import java.util.List;
 public class PlayerContext {
     public float health;
     public float maxHealth;
-    public float hunger;
+    public int hunger;
     public float saturation;
     public int air;
     public int armour;
@@ -13,14 +13,14 @@ public class PlayerContext {
     public int age;
     public String heldItemName;
     public InventoryContext inventory;
-    public float x;
-    public float y;
-    public float z;
+    public double x;
+    public double y;
+    public double z;
     public float yaw;
     public float pitch;
-    public float velocityX;
-    public float velocityY;
-    public float velocityZ;
+    public double velocityX;
+    public double velocityY;
+    public double velocityZ;
     public boolean isRiding;
     public boolean isSneaking;
     public boolean isSubmerged;
@@ -37,10 +37,8 @@ public class PlayerContext {
     public int sleepTimer;
     public String gameMode;
     public List<StatusEffectContext> effects;
-    public EntityContext attackingEntity;
-    public EntityContext attackedEntity;
 
-    public PlayerContext(float health, float maxHealth, float hunger, float saturation, int air, int armour, int experience, int age, String heldItemName, InventoryContext inventory, float x, float y, float z, float yaw, float pitch, float velocityX, float velocityY, float velocityZ, boolean isRiding, boolean isSneaking, boolean isSubmerged, boolean isFlying, boolean isAlive, boolean isCrawling, boolean isInFluid, boolean isInLava, boolean isJumping, boolean isSprinting, boolean isSwimming, boolean isUsingSpyglass, boolean isClimbingLadder, int sleepTimer, String gameMode, List<StatusEffectContext> effects, EntityContext attackingEntity, EntityContext attackedEntity) {
+    public PlayerContext(float health, float maxHealth, int hunger, float saturation, int air, int armour, int experience, int age, String heldItemName, InventoryContext inventory, double x, double y, double z, float yaw, float pitch, double velocityX, double velocityY, double velocityZ, boolean isRiding, boolean isSneaking, boolean isSubmerged, boolean isFlying, boolean isAlive, boolean isCrawling, boolean isInFluid, boolean isInLava, boolean isJumping, boolean isSprinting, boolean isSwimming, boolean isUsingSpyglass, boolean isClimbingLadder, int sleepTimer, String gameMode, List<StatusEffectContext> effects) {
         this.health = health;
         this.maxHealth = maxHealth;
         this.hunger = hunger;
@@ -75,15 +73,17 @@ public class PlayerContext {
         this.sleepTimer = sleepTimer;
         this.gameMode = gameMode;
         this.effects = effects;
-        this.attackingEntity = attackingEntity;
-        this.attackedEntity = attackedEntity;
     }
 
-    public int getSleepTimer() {
-        return sleepTimer;
+    public float getHealth() {
+        return health;
     }
 
-    public float getHunger() {
+    public float getMaxHealth() {
+        return maxHealth;
+    }
+
+    public int getHunger() {
         return hunger;
     }
 
@@ -97,14 +97,6 @@ public class PlayerContext {
 
     public int getArmour() {
         return armour;
-    }
-
-    public float getMaxHealth() {
-        return maxHealth;
-    }
-
-    public float getHealth() {
-        return health;
     }
 
     public int getExperience() {
@@ -123,15 +115,15 @@ public class PlayerContext {
         return inventory;
     }
 
-    public float getX() {
+    public double getX() {
         return x;
     }
 
-    public float getY() {
+    public double getY() {
         return y;
     }
 
-    public float getZ() {
+    public double getZ() {
         return z;
     }
 
@@ -143,15 +135,15 @@ public class PlayerContext {
         return pitch;
     }
 
-    public float getVelocityX() {
+    public double getVelocityX() {
         return velocityX;
     }
 
-    public float getVelocityY() {
+    public double getVelocityY() {
         return velocityY;
     }
 
-    public float getVelocityZ() {
+    public double getVelocityZ() {
         return velocityZ;
     }
 
@@ -159,12 +151,12 @@ public class PlayerContext {
         return isRiding;
     }
 
-    public boolean isSubmerged() {
-        return isSubmerged;
-    }
-
     public boolean isSneaking() {
         return isSneaking;
+    }
+
+    public boolean isSubmerged() {
+        return isSubmerged;
     }
 
     public boolean isFlying() {
@@ -199,12 +191,16 @@ public class PlayerContext {
         return isSwimming;
     }
 
+    public boolean isClimbingLadder() {
+        return isClimbingLadder;
+    }
+
     public boolean isUsingSpyglass() {
         return isUsingSpyglass;
     }
 
-    public boolean isClimbingLadder() {
-        return isClimbingLadder;
+    public int getSleepTimer() {
+        return sleepTimer;
     }
 
     public String getGameMode() {
@@ -213,13 +209,5 @@ public class PlayerContext {
 
     public List<StatusEffectContext> getEffects() {
         return effects;
-    }
-
-    public EntityContext getAttackingEntity() {
-        return attackingEntity;
-    }
-
-    public EntityContext getAttackedEntity() {
-        return attackedEntity;
     }
 }

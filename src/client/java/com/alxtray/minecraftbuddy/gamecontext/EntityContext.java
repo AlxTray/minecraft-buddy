@@ -6,11 +6,13 @@ public class EntityContext {
     public String name;
     public ItemContext heldItem;
     public List<String> armour;
+    public float distanceFromPlayer;
 
-    public EntityContext(String name, ItemContext heldItem, List<String> armour) {
+    public EntityContext(String name, ItemContext heldItem, List<String> armour, float distanceFromPlayer) {
         this.name = name;
         this.heldItem = heldItem;
         this.armour = armour;
+        this.distanceFromPlayer = distanceFromPlayer;
     }
 
     public String getName() {
@@ -23,5 +25,9 @@ public class EntityContext {
 
     public List<String> getArmour() {
         return armour;
+    }
+
+    public float getDistanceFromPlayer() {
+        return distanceFromPlayer;
     }
 }
