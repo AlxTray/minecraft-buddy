@@ -6,9 +6,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerInventory;
 
 import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 public class EventOrchestrator implements ClientTickEvents.EndTick {
     private final long periodicInterval;
@@ -94,17 +98,34 @@ public class EventOrchestrator implements ClientTickEvents.EndTick {
                         .map(effect -> new StatusEffectContext(effect.getEffectType().getType().name(), effect.getAmplifier(), effect.getDuration()))
                         .toList()
         );
+        ClientWorld world = MinecraftClient.getInstance().player.clientWorld;
+        EnvironmentContext environmentContext = new EnvironmentContext(
+                StreamSupport.stream(world.getEntities().spliterator(), false)
+                        .filter(entity -> entity instanceof MobEntity mob
+                                && mob.squaredDistanceTo(player) <= 15 * 15)
+                        .map(MobEntity.class::cast)
+                        .map(entity -> new EntityContext(
+                                entity.getName().getString(),
+                                new ItemContext(entity.getActiveItem().getItemName().getString(), entity.getActiveItem().getCount()),
+                                entity.distanceTo(player)))
+                        .toList(),
+                world.isRaining(),
+                world.getTimeOfDay(),
+                world.getBiome(player.getBlockPos()).getIdAsString().toString()
+        );
+        GameContext context = new GameContext(playerContext, environmentContext, world.getTime());
+
         ObjectMapper objectMapper = new ObjectMapper();
-        String playerContextJson;
+        String contextJson;
         try {
-            playerContextJson = objectMapper.writeValueAsString(playerContext);
+            contextJson = objectMapper.writeValueAsString(context);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(playerContextJson);
+        System.out.println(contextJson);
 
         FrameGrabber.captureFrameBufferAsync();
-        ConversationHandler.getInstance().runRequestAsync(playerContextJson);
+        ConversationHandler.getInstance().runRequestAsync(contextJson);
     }
 
     public static void register(long intervalSeconds) {

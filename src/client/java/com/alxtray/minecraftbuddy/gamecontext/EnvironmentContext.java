@@ -4,13 +4,13 @@ import java.util.List;
 
 public class EnvironmentContext {
     public List<EntityContext> mobsCloseToPLayer;
-    public String weather;
-    public String timeOfDay;
+    public boolean isRaining;
+    public long timeOfDay;
     public String biome;
 
-    public EnvironmentContext(List<EntityContext> mobsCloseToPLayer, String weather, String timeOfDay, String biome) {
+    public EnvironmentContext(List<EntityContext> mobsCloseToPLayer, boolean isRaining, long timeOfDay, String biome) {
         this.mobsCloseToPLayer = mobsCloseToPLayer;
-        this.weather = weather;
+        this.isRaining = isRaining;
         this.timeOfDay = timeOfDay;
         this.biome = biome;
     }
@@ -19,11 +19,11 @@ public class EnvironmentContext {
         return mobsCloseToPLayer;
     }
 
-    public String getWeather() {
-        return weather;
+    public boolean getIsRaining() {
+        return isRaining;
     }
 
-    public String getTimeOfDay() {
+    public long getTimeOfDay() {
         return timeOfDay;
     }
 

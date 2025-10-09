@@ -61,11 +61,11 @@ public final class ConversationHandler {
         responseSubscribers.add(responseSubscriber);
     }
 
-    public void runRequestAsync(String playerContextJson) {
-        CompletableFuture.runAsync(() -> runRequest(playerContextJson), ExecutorsRegistry.AI_EXECUTOR);
+    public void runRequestAsync(String contextJson) {
+        CompletableFuture.runAsync(() -> runRequest(contextJson), ExecutorsRegistry.AI_EXECUTOR);
     }
 
-    private void runRequest(String playerContextJson) {
+    private void runRequest(String contextJson) {
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         byte[] frameBytes;
         try {
@@ -85,7 +85,7 @@ public final class ConversationHandler {
                 .model(Model.CLAUDE_SONNET_4_5_20250929)
                 .maxTokens(1024L)
                 .temperature(1)
-                .addUserMessage(systemPrompt + " " + userPrompt + " " + responses + " " + playerContextJson)
+                .addUserMessage(systemPrompt + " " + userPrompt + " " + responses + " " + contextJson)
                 .addUserMessageOfBlockParams(List.of(frameImageParam))
                 .build();
 
