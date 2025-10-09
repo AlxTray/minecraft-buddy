@@ -39,7 +39,7 @@ public final class ConversationHandler {
             Goal:
             Your output should feel **completely off-the-rails, raw, chaotic, and unhinged**, dripping with personality, swearing, absurdity, and impulsive mockery. Every line should be as if Ari is losing her mind watching the player and roasting everything in sight.
             """;
-    private static final String userPrompt = "Generate Ari's chaotic, unhinged response based on the attached Minecraft frame. Keep all swearing, insults, and chaos. Make sure it is a short burst suitable for TTS. Previous responses made are as follows:";
+    private static final String userPrompt = "Generate Ari's chaotic, unhinged response based on the attached Minecraft frame. Keep all swearing, insults, and chaos. Make sure it is a short burst suitable for TTS. The following JSON is the current player context information, make sure to only base your response on facts in the image and JSON context. Previous responses made are as follows:";
 
     private final List<String> responses = new ArrayList<>();
     private AnthropicClientAsync claude;
@@ -61,11 +61,11 @@ public final class ConversationHandler {
         responseSubscribers.add(responseSubscriber);
     }
 
-    public void runRequestAsync() {
-        CompletableFuture.runAsync(this::runRequest, ExecutorsRegistry.AI_EXECUTOR);
+    public void runRequestAsync(String playerContextJson) {
+        CompletableFuture.runAsync(() -> runRequest(playerContextJson), ExecutorsRegistry.AI_EXECUTOR);
     }
 
-    private void runRequest() {
+    private void runRequest(String playerContextJson) {
         ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         byte[] frameBytes;
         try {
@@ -85,7 +85,7 @@ public final class ConversationHandler {
                 .model(Model.CLAUDE_SONNET_4_5_20250929)
                 .maxTokens(1024L)
                 .temperature(1)
-                .addUserMessage(systemPrompt + " " + userPrompt + " " + responses)
+                .addUserMessage(systemPrompt + " " + userPrompt + " " + responses + " " + playerContextJson)
                 .addUserMessageOfBlockParams(List.of(frameImageParam))
                 .build();
 

@@ -104,7 +104,7 @@ public class EventOrchestrator implements ClientTickEvents.EndTick {
         System.out.println(playerContextJson);
 
         FrameGrabber.captureFrameBufferAsync();
-        ConversationHandler.getInstance().runRequestAsync();
+        ConversationHandler.getInstance().runRequestAsync(playerContextJson);
     }
 
     public static void register(long intervalSeconds) {
