@@ -1,6 +1,8 @@
 package com.alxtray.minecraftbuddy.interfaces;
 
+import com.alxtray.minecraftbuddy.ModelResponse;
+
 public interface ResponseSubscriber {
-    void onResponseAsync(Object response);
-    void onResponse(Object response);
+    void onResponseAsync(ModelResponse modelResponse);
+    void onResponse(ModelResponse modelResponse);
 }

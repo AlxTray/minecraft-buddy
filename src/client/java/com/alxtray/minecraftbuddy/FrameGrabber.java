@@ -2,53 +2,48 @@ package com.alxtray.minecraftbuddy;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.texture.NativeImage;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.client.util.ScreenshotRecorder;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 
+import static com.alxtray.minecraftbuddy.Minecraftbuddy.LOGGER;
+
 public class FrameGrabber {
-    public static void captureFrameBufferAsync() {
-        CompletableFuture.runAsync(FrameGrabber::captureFramebuffer, ExecutorsRegistry.FRAMEBUFFER_EXECUTOR);
+    public static void captureFrameBufferAsyncAndAwait() {
+        CompletableFuture.runAsync(FrameGrabber::captureFramebuffer, ExecutorsRegistry.FRAMEBUFFER_EXECUTOR)
+                .exceptionally(ex -> {
+                    LOGGER.error("Failed to capture frame", ex);
+                    return null;
+                })
+                .join();
     }
 
     public static void captureFramebuffer() {
         MinecraftClient mc = MinecraftClient.getInstance();
         Framebuffer framebuffer = mc.getFramebuffer();
 
-        int width = framebuffer.textureWidth;
-        int height = framebuffer.textureHeight;
-
-        ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * 4);
-        mc.execute(() -> GL11.glReadPixels(0, 0, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer));
-
-        NativeImage image = new NativeImage(width, height, false);
-
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int index = ((height - 1 - y) * width + x) * 4;
-                int r = buffer.get(index) & 0xFF;
-                int g = buffer.get(index + 1) & 0xFF;
-                int b = buffer.get(index + 2) & 0xFF;
-                int a = buffer.get(index + 3) & 0xFF;
-
-                image.setColor(x, y, (a << 24) | (b << 16) | (g << 8) | r);
-            }
+        File frameDir = new File(mc.runDirectory, "minecraft-buddy");
+        if (!frameDir.exists()) {
+            frameDir.mkdirs();
         }
+        File outputFile = new File(frameDir, "frame.png");
 
-        String path = FrameGrabber.class.getResource("/frames").getPath();
-        try {
-            image.writeTo(Paths.get(path, "frame.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            image.close();
-        }
+        mc.execute(() -> ScreenshotRecorder.takeScreenshot(framebuffer, (image) -> {
+            CompletableFuture.runAsync(() -> {
+                try (image) {
+                    image.writeTo(outputFile);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }, ExecutorsRegistry.FRAMEBUFFER_EXECUTOR)
+                    .exceptionally(ex -> {
+                        LOGGER.error("Failed to write frame to file", ex);
+                        return null;
+                    });
+        }));
 
-        System.out.println("FINISHED FRAMEBUFFER");
+        LOGGER.info("FINISHED FRAMEBUFFER");
     }
 }

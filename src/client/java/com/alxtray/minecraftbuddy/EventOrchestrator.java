@@ -7,14 +7,15 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerInventory;
 
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-public class EventOrchestrator implements ClientTickEvents.EndTick {
+import static com.alxtray.minecraftbuddy.Minecraftbuddy.LOGGER;
+
+public class EventOrchestrator implements ClientTickEvents.StartTick {
     private final long periodicInterval;
     private boolean onLoadingScreen = true;
     private long lastCaptureTime = 0;
@@ -24,7 +25,7 @@ public class EventOrchestrator implements ClientTickEvents.EndTick {
     }
 
     @Override
-    public void onEndTick(MinecraftClient client) {
+    public void onStartTick(MinecraftClient client) {
         if (client.world == null) return;
 
         long now = System.currentTimeMillis();
@@ -35,8 +36,7 @@ public class EventOrchestrator implements ClientTickEvents.EndTick {
             return;
         }
 
-        System.out.println("JSON SPEED CHECK");
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        ClientPlayerEntity player = client.player;
         PlayerInventory playerInventory = player.getInventory();
         PlayerContext playerContext = new PlayerContext(
                 player.getHealth(),
@@ -98,7 +98,7 @@ public class EventOrchestrator implements ClientTickEvents.EndTick {
                         .map(effect -> new StatusEffectContext(effect.getEffectType().getType().name(), effect.getAmplifier(), effect.getDuration()))
                         .toList()
         );
-        ClientWorld world = MinecraftClient.getInstance().player.clientWorld;
+        ClientWorld world = client.world;
         EnvironmentContext environmentContext = new EnvironmentContext(
                 StreamSupport.stream(world.getEntities().spliterator(), false)
                         .filter(entity -> entity instanceof MobEntity mob
@@ -122,13 +122,13 @@ public class EventOrchestrator implements ClientTickEvents.EndTick {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(contextJson);
+        LOGGER.info(contextJson);
 
-        FrameGrabber.captureFrameBufferAsync();
+        FrameGrabber.captureFrameBufferAsyncAndAwait();
         ConversationHandler.getInstance().runRequestAsync(contextJson);
     }
 
     public static void register(long intervalSeconds) {
-        ClientTickEvents.END_CLIENT_TICK.register(new EventOrchestrator(intervalSeconds));
+        ClientTickEvents.START_CLIENT_TICK.register(new EventOrchestrator(intervalSeconds));
     }
 }

@@ -1,6 +1,7 @@
 package com.alxtray.minecraftbuddy.tts.implementations;
 
 import com.alxtray.minecraftbuddy.ExecutorsRegistry;
+import com.alxtray.minecraftbuddy.ModelResponse;
 import com.alxtray.minecraftbuddy.interfaces.ResponseSubscriber;
 import javazoom.jl.player.Player;
 import org.springframework.ai.audio.tts.TextToSpeechPrompt;
@@ -11,6 +12,8 @@ import org.springframework.ai.elevenlabs.api.ElevenLabsApi;
 
 import java.io.ByteArrayInputStream;
 import java.util.concurrent.CompletableFuture;
+
+import static com.alxtray.minecraftbuddy.Minecraftbuddy.LOGGER;
 
 public class LemonFoxTTS implements ResponseSubscriber {
     private final ElevenLabsApi elevenLabsApi;
@@ -23,12 +26,16 @@ public class LemonFoxTTS implements ResponseSubscriber {
     }
 
     @Override
-    public void onResponseAsync(Object response) {
-        CompletableFuture.runAsync(() -> onResponse(response), ExecutorsRegistry.TTS_EXECUTOR);
+    public void onResponseAsync(ModelResponse modelResponse) {
+        CompletableFuture.runAsync(() -> onResponse(modelResponse), ExecutorsRegistry.TTS_EXECUTOR)
+                .exceptionally(ex -> {
+                    LOGGER.error("Failed to call LemonFox TTS", ex);
+                    return null;
+                });
     }
 
     @Override
-    public void onResponse(Object response) {
+    public void onResponse(ModelResponse modelResponse) {
         ElevenLabsTextToSpeechModel elevenLabsTextToSpeechModel = ElevenLabsTextToSpeechModel.builder()
                 .elevenLabsApi(elevenLabsApi)
                 .defaultOptions(ElevenLabsTextToSpeechOptions.builder()
@@ -37,7 +44,7 @@ public class LemonFoxTTS implements ResponseSubscriber {
                         .build())
                 .build();
 
-        TextToSpeechPrompt speechPrompt = new TextToSpeechPrompt((String)response);
+        TextToSpeechPrompt speechPrompt = new TextToSpeechPrompt(modelResponse.message);
         TextToSpeechResponse speechResponse = elevenLabsTextToSpeechModel.call(speechPrompt);
 
         byte[] ttsChunk = speechResponse.getResult().getOutput();
